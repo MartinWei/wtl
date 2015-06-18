@@ -33,16 +33,16 @@ public:
 	virtual ~Widget(void);
 
 public:
-	BOOL Create(const Gdiplus::Rect& rc, MsgDispatcher* pDispatch,
+	BOOL Create(const Gdiplus::RectF& rc, MsgDispatcher* pDispatch,
 		Widget* pParent, BOOL bNC = FALSE);
 
 	// Position
 public:
-	void GetRect(Gdiplus::Rect& rc);
-	void GetWidRect(Gdiplus::Rect& rc);
-	void SetWidRect(const Gdiplus::Rect& rc);
+	void GetRect(Gdiplus::RectF& rc);
+	void GetWidRect(Gdiplus::RectF& rc);
+	void SetWidRect(const Gdiplus::RectF& rc);
 private:
-	void SetRect(const Gdiplus::Rect& rc);
+	void SetRect(const Gdiplus::RectF& rc);
 public:
 	// Generation
 	Widget* GetParent() const;
@@ -76,13 +76,39 @@ public:
 protected:
 	void SetScrollBar(int nBar, ScrollBar* pScrollBar);
 
-protected:
-	WORD m_wState;
+	// Text
+public:
+	void SetText(const std::wstring& strText);
+	std::wstring GetText() const;
+	void SetFormat(const SharedPtr<Gdiplus::StringFormat>& pFormat);
+	const SharedPtr<Gdiplus::StringFormat> GetFormat() const;
+	void SetFont(const SharedPtr<Gdiplus::Font>& pFont);
+	const SharedPtr<Gdiplus::Font> GetFont() const;
+	void SetBkgnd(const Gdiplus::Color& clrBkgnd);
+	Gdiplus::Color GetBkgnd() const;
+	void SetFrameClr(const Gdiplus::Color& clrFrame);
+	Gdiplus::Color GetFrameClr() const;
+	void SetTextClr(const Gdiplus::Color& clrText);
+	Gdiplus::Color GetTextColor() const;
+public:
+	void SetState(WORD wState);
+	WORD GetState() const;
 
 private:
+	WORD m_wState;
+private:
+	void InitText();
+private:
+	std::wstring m_strText;
+	SharedPtr<Gdiplus::StringFormat> m_pFormat;
+	SharedPtr<Gdiplus::Font> m_pFont;
+	Gdiplus::Color m_clrBkgnd;
+	Gdiplus::Color m_clrFrame;
+	Gdiplus::Color m_clrText;
+private:
 	// Position
-	Gdiplus::Rect m_rc;
-	Gdiplus::Rect m_rcWid;
+	Gdiplus::RectF m_rc;
+	Gdiplus::RectF m_rcWid;
 	BOOL m_bNC;
 
 	// Generation
@@ -137,7 +163,7 @@ public:
 public:
 	static HINSTANCE GetInstance();
 	static void SetInstance(HINSTANCE hInstance);
-	static RECT FromRect(const Gdiplus::Rect& rc);
+	static RECT FromRect(const Gdiplus::RectF& rc);
 protected:
 	HWND m_hWnd;
 	std::vector<HWID> m_rghWid;

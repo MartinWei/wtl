@@ -40,6 +40,8 @@ DECLARE_HANDLE	(HWID);
 #define ASSERT(expr) _ASSERT(expr)
 #endif
 
+#define SharedPtr std::tr1::shared_ptr
+
 #ifdef _DEBUG
 #define TRACE __Trace
 #else

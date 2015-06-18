@@ -22,7 +22,9 @@ Widget::Widget(void)
 , m_hWid(INVALID_HWID)
 , m_pVScrollbar(NULL)
 , m_pHScrollbar(NULL)
+, m_strText(_T("WTL Widget"))
 {
+	InitText();
 }
 
 Widget::~Widget(void)
@@ -35,17 +37,17 @@ Widget::~Widget(void)
 	TDEL(m_pHScrollbar);
 }
 
-void Widget::GetRect( Gdiplus::Rect& rc )
+void Widget::GetRect( Gdiplus::RectF& rc )
 {
 	rc = m_rc;
 }
 
-void Widget::GetWidRect( Gdiplus::Rect& rc )
+void Widget::GetWidRect( Gdiplus::RectF& rc )
 {
 	rc = m_rcWid;
 }
 
-void Widget::SetWidRect( const Gdiplus::Rect& rc )
+void Widget::SetWidRect( const Gdiplus::RectF& rc )
 {
 	m_rcWid = rc;
 	SetRect(m_rcWid);
@@ -53,12 +55,12 @@ void Widget::SetWidRect( const Gdiplus::Rect& rc )
 	ProcessWidMessage(WM_SIZE, 0, 0, lResult, 0);
 }
 
-void Widget::SetRect( const Gdiplus::Rect& rc )
+void Widget::SetRect( const Gdiplus::RectF& rc )
 {
 	m_rc = rc;
 }
 
-BOOL Widget::Create( const Gdiplus::Rect& rc, MsgDispatcher* pDispatch, Widget* pParent, BOOL bNC /*= FALSE*/ )
+BOOL Widget::Create( const Gdiplus::RectF& rc, MsgDispatcher* pDispatch, Widget* pParent, BOOL bNC /*= FALSE*/ )
 {
 	ASSERT(pHandler != NULL);
 	m_pDispatch = pDispatch;
@@ -103,9 +105,13 @@ void Widget::InvalidWid()
 
 void Widget::OnDraw( Gdiplus::Graphics& grph )
 {
-	Gdiplus::Rect rc;
+	Gdiplus::RectF rc;
 	GetRect(rc);
-	
+	Gdiplus::SolidBrush bkgnd(m_clrBkgnd);
+	grph.FillRectangle(&bkgnd, rc.X, rc.Y, rc.Width(), rc.Height());
+	Gdiplus::SolidBrush text(m_clrText);
+	grph.DrawString(m_strText.c_str(), m_strText.size(), m_pFont.get(),
+		rc, m_pFormat.get(), &text);
 }
 
 void Widget::SetHwid( HWID hWid )
@@ -161,6 +167,81 @@ void Widget::GetScrollInfo( int nBar, LPSCROLLINFO lpsi )
 }
 
 void Widget::SetScrollBar( int nBar, ScrollBar* pScrollBar )
+{
+
+}
+
+void Widget::SetText( const std::wstring& strText )
+{
+	m_strText = strText;
+}
+
+std::wstring Widget::GetText() const
+{
+	return m_strText;
+}
+
+void Widget::SetFormat( const SharedPtr<Gdiplus::StringFormat>& pFormat )
+{
+	m_pFormat = pFormat;
+}
+
+const SharedPtr<Gdiplus::StringFormat> Widget::GetFormat() const
+{
+	return m_pFormat;
+}
+
+void Widget::SetFont( const SharedPtr<Gdiplus::Font>& pFont )
+{
+	m_pFont = pFont;
+}
+
+const SharedPtr<Gdiplus::Font> Widget::GetFont() const
+{
+	return m_pFont;
+}
+
+void Widget::SetBkgnd( const Gdiplus::Color& clrBkgnd )
+{
+	m_clrBkgnd = clrBkgnd;
+}
+
+Gdiplus::Color Widget::GetBkgnd() const
+{
+	return m_clrBkgnd;
+}
+
+void Widget::SetFrameClr( const Gdiplus::Color& clrFrame )
+{
+	m_clrFrame = clrFrame;
+}
+
+Gdiplus::Color Widget::GetFrameClr() const
+{
+	return m_clrFrame;
+}
+
+void Widget::SetState( WORD wState )
+{
+	m_wState = wState;
+}
+
+WORD Widget::GetState() const
+{
+	return m_wState;
+}
+
+void Widget::SetTextClr( const Gdiplus::Color& clrText )
+{
+	m_clrText = clrText;
+}
+
+Gdiplus::Color Widget::GetTextColor() const
+{
+	return m_clrText;
+}
+
+void Widget::InitText()
 {
 
 }
