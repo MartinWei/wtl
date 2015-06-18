@@ -11,9 +11,9 @@
 #pragma once
 
 #ifdef WTL_EXPORTS
-#define WTL_API __declspec(dllexport)
+#define WTL_API //__declspec(dllexport)
 #else
-#define WTL_API __declspec(dllimport)
+#define WTL_API //__declspec(dllimport)
 #endif
 
 #define BEGIN_NAMESPACE_WTL
