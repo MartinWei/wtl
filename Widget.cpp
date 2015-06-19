@@ -16,15 +16,16 @@ USING_NAMESPACE_WTL;
 Widget::Widget(void)
 : m_bNC(FALSE)
 , m_pParent(NULL)
-, m_hWid(INVALID_HWID)
 , m_pDispatch(NULL)
 , m_wState(WID_STATE_STATIC)
 , m_hWid(INVALID_HWID)
 , m_pVScrollbar(NULL)
 , m_pHScrollbar(NULL)
-, m_strText(_T("WTL Widget"))
+, m_strText(WID_DEFAULT_TEXT)
+, m_nSBflags(-1)
+, m_wShow(SW_SHOW)
 {
-	InitText();
+	InitFont();
 }
 
 Widget::~Widget(void)
@@ -62,12 +63,13 @@ void Widget::SetRect( const Gdiplus::RectF& rc )
 
 BOOL Widget::Create( const Gdiplus::RectF& rc, MsgDispatcher* pDispatch, Widget* pParent, BOOL bNC /*= FALSE*/ )
 {
-	ASSERT(pHandler != NULL);
+	ASSERT(pDispatch != NULL);
 	m_pDispatch = pDispatch;
 	m_pDispatch->Create(this);
 	m_bNC = bNC;
 	SetParent(pParent);
 	SetWidRect(rc);
+	return TRUE;
 }
 
 Widget* Widget::GetParent() const
@@ -89,7 +91,7 @@ ULONG Widget::GetChildren( std::vector<Widget*>& rgpChildren ) const
 
 ULONG Widget::GetChildren() const
 {
-	m_rgpChilren.size();
+	return m_rgpChilren.size();
 }
 
 BOOL Widget::HasChild() const
@@ -108,7 +110,7 @@ void Widget::OnDraw( Gdiplus::Graphics& grph )
 	Gdiplus::RectF rc;
 	GetRect(rc);
 	Gdiplus::SolidBrush bkgnd(m_clrBkgnd);
-	grph.FillRectangle(&bkgnd, rc.X, rc.Y, rc.Width(), rc.Height());
+	grph.FillRectangle(&bkgnd, rc.X, rc.Y, rc.Width, rc.Height);
 	Gdiplus::SolidBrush text(m_clrText);
 	grph.DrawString(m_strText.c_str(), m_strText.size(), m_pFont.get(),
 		rc, m_pFormat.get(), &text);
@@ -127,7 +129,7 @@ HWID Widget::GetHwid() const
 ULONG Widget::AddChild( Widget* pWid )
 {
 	std::vector<Widget*>::iterator it = 
-		std::find(m_rgpChilren.begin(), m_rgpChilren.end());
+		std::find(m_rgpChilren.begin(), m_rgpChilren.end(), pWid);
 	if (it == m_rgpChilren.end())
 	{
 		m_rgpChilren.push_back(pWid);
@@ -138,7 +140,7 @@ ULONG Widget::AddChild( Widget* pWid )
 ULONG Widget::RemoveChild( Widget* pWid )
 {
 	std::vector<Widget*>::iterator it = 
-		std::find(m_rgpChilren.begin(), m_rgpChilren.end());
+		std::find(m_rgpChilren.begin(), m_rgpChilren.end(), pWid);
 	if (it != m_rgpChilren.end())
 	{
 		m_rgpChilren.erase(it);
@@ -223,7 +225,14 @@ Gdiplus::Color Widget::GetFrameClr() const
 
 void Widget::SetState( WORD wState )
 {
+	if (wState == m_wState)
+	{
+		return;
+	}
+
 	m_wState = wState;
+
+	SendWidMessage(WM_UPDATEUISTATE, m_wState);
 }
 
 WORD Widget::GetState() const
@@ -241,9 +250,45 @@ Gdiplus::Color Widget::GetTextColor() const
 	return m_clrText;
 }
 
-void Widget::InitText()
+void Widget::InitFont()
 {
+	m_pFormat.reset(new Gdiplus::StringFormat);
+	m_pFormat->SetAlignment(Gdiplus::StringAlignmentCenter);
+	m_pFormat->SetLineAlignment(Gdiplus::StringAlignmentCenter);
+	m_pFont.reset(new Gdiplus::Font(WID_FONT_STATIC, 
+		WID_FSIZE_STATIC));
+	m_clrBkgnd.SetFromCOLORREF(WID_BKGND_STATIC);
+	m_clrFrame.SetFromCOLORREF(WID_FRAME_STATIC);
+	m_clrText.SetFromCOLORREF(WID_TEXT_STATIC);
+}
 
+void Widget::ShowWid( WORD wShow )
+{
+	m_wShow = wShow;
+}
+
+BOOL Widget::SendWidMessage( UINT uMsg, WPARAM wParam /*= 0*/, LPARAM lParam /*= 0*/ )
+{
+	LRESULT lResult = 0;
+	return ProcessWidMessage(uMsg, wParam, lParam, lResult, 0);
+}
+
+BOOL Widget::PostWidMessage( UINT uMsg, WPARAM wParam /*= 0*/, LPARAM lParam /*= 0*/ )
+{
+	LRESULT lResult = 0;
+	return ProcessWidMessage(uMsg, wParam, lParam, lResult, 0);
+}
+
+UINT_PTR Widget::SetWidTimer( UINT_PTR nIDEvent, UINT uElapse, TIMERPROC lpTimerFunc )
+{
+	ASSERT(FALSE);
+	return 1;
+}
+
+BOOL Widget::KillWidTimer( UINT_PTR uIDEvent )
+{
+	ASSERT(FALSE);
+	return 1;
 }
 
 ScrollBar::ScrollBar( int nBar )
@@ -285,4 +330,19 @@ void ScrollBar::SetScrollInfo( const SCROLLINFO* pScrollInfo )
 	{
 		memcpy(m_pScrollInfo, pScrollInfo, sizeof(SCROLLINFO));
 	}
+}
+
+Widget* MsgDispatcher::FromHwid( HWID hWid ) const
+{
+	return NULL;
+}
+
+RECT MsgDispatcher::FromRect( const Gdiplus::RectF& rc )
+{
+	RECT rcc = {0};
+	rcc.left = (LONG)rc.X;
+	rcc.top = (LONG)rc.Y;
+	rcc.right = rcc.left + (LONG)rc.Width;
+	rcc.bottom = rcc.top + (LONG)rc.Height;
+	return rcc;
 }

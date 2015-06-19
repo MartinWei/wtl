@@ -19,12 +19,48 @@
 void __Trace( LPCTSTR pstrFormat, ... )
 {
 #ifdef _DEBUG
-	TCHAR szBuffer[300] = { 0 };
+	WCHAR szBuffer[300] = { 0 };
 	va_list args;
 	va_start(args, pstrFormat);
 	::wvnsprintf(szBuffer, lengthof(szBuffer) - 2, pstrFormat, args);
-	_tcscat_s(szBuffer, 300, _T("\n"));
+	wcscat_s(szBuffer, 300, L"\n");
 	va_end(args);
 	::OutputDebugString(szBuffer);
 #endif
 }
+
+USING_NAMESPACE_WTL;
+
+MemDC::MemDC( HDC hdc )
+: m_hdc(hdc)
+{
+
+}
+
+MemDC::~MemDC()
+{
+
+}
+
+MemDC::operator HDC()
+{
+	return m_hdc;
+}
+
+GdiPlusHelper::GdiPlusHelper()
+{
+	Gdiplus::GdiplusStartupInput gdiplusStartupInput;
+	Gdiplus::GdiplusStartup(&m_nGdiPlusToken, &gdiplusStartupInput, NULL);
+}
+
+GdiPlusHelper::~GdiPlusHelper()
+{
+	Gdiplus::GdiplusShutdown(m_nGdiPlusToken);
+}
+
+
+BEGIN_NAMESPACE_WTL
+
+GdiPlusHelper gdiplushelper;
+
+END_NAMESPACE_WTL

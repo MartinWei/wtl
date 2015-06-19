@@ -41,7 +41,7 @@ HWND MsgDispatcher::GetHWnd() const
 BOOL MsgDispatcher::Create( Widget* pThis )
 {
 	ASSERT(pThis != NULL);
-	ASSERT(pThis->GetWid() == INVALID_HWID);
+	ASSERT(pThis->GetHwid() == INVALID_HWID);
 	if (pThis->GetHwid() != INVALID_HWID)
 	{
 		return FALSE;
@@ -71,6 +71,7 @@ BOOL MsgDispatcher::Destroy( HWID& hWid )
 	}
 	m_rgID2Info.erase(it);
 	RecycleHwid(hWid);
+	return TRUE;
 }
 
 HWID MsgDispatcher::GenerateHwid()
@@ -92,7 +93,12 @@ void MsgDispatcher::DrawWid( Widget* pWid )
 	{
 		return;
 	}
-	DrawGen(pWid, hdc);
+	
+	__begin_mem_draw
+	MemDC drawdc(hdc);
+	DrawGen(pWid, drawdc);
+	__end_mem_draw;
+
 	::ReleaseDC(m_hWnd, hdc);
 }
 
@@ -100,12 +106,13 @@ void MsgDispatcher::DrawGen( Widget* pWid, HDC hdc)
 {
 	ASSERT(pWid != NULL);
 	POINT pt = {0};
-	Gdiplus::Rect rcWid;
+	Gdiplus::RectF rcWid;
 	pWid->GetWidRect(rcWid);
-	::SetViewportOrgEx(hdc, rcWid.X, rcWid.Y, &pt);
+	RECT rcc = FromRect(rcWid);
+	//::SetViewportOrgEx(hdc, rcc.left, rcc.top, &pt);
 	Gdiplus::Graphics grph(hdc);
 	pWid->OnDraw(grph);
-	::SetViewportOrgEx(hdc, pt.x, pt.y, NULL);
+	//::SetViewportOrgEx(hdc, pt.x, pt.y, NULL);
 	std::vector<Widget*> rgpChildren;
 	pWid->GetChildren(rgpChildren);
 	for (std::vector<Widget*>::iterator it = 
@@ -116,9 +123,46 @@ void MsgDispatcher::DrawGen( Widget* pWid, HDC hdc)
 	}
 }
 
-LRESULT MsgDispatcher::HandleMessage( UINT nMsg, WPARAM wParam, LPARAM lParam )
+LRESULT MsgDispatcher::DispatchMessage( UINT uMsg, WPARAM wParam, LPARAM lParam )
 {
+	LRESULT lResult = 1;
+	POINT pt = {GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)};
+	Widget* pWid = NULL;
 
+	switch(uMsg)
+	{
+	case WM_MOUSEMOVE:
+		{
+			pWid = GetWidPt(pt);
+			if (pWid == NULL)
+			{
+				pWid = FromHwid(m_hLastMouseMove);
+				if (pWid != NULL)
+				{
+					pWid->SendWidMessage(WM_MOUSELEAVE);
+					m_hLastMouseMove = INVALID_HWID;
+					return lResult;
+				}
+			}
+			else
+			{
+				HWID hWidNowMouse = pWid->GetHwid();
+				if (m_hLastMouseMove != hWidNowMouse)
+				{
+					Widget* pLastMouse = FromHwid(m_hLastMouseMove);
+					if (pLastMouse != NULL)
+					{
+						pLastMouse->SendWidMessage(WM_MOUSELEAVE);
+					}
+					m_hLastMouseMove = hWidNowMouse;
+				}
+				pWid->SendWidMessage(WM_MOUSEMOVE);
+				return lResult;
+			}
+		}
+		break;
+	}
+	return lResult;
 }
 
 Widget* MsgDispatcher::GetWidPt( POINT pt )
@@ -129,7 +173,7 @@ Widget* MsgDispatcher::GetWidPt( POINT pt )
 		it != m_rgID2Info.end(); ++it)
 	{
 		ASSERT(it->second != NULL);
-		Gdiplus::Rect rcWid;
+		Gdiplus::RectF rcWid;
 		it->second->GetWidRect(rcWid);
 		if (::PtInRect(&FromRect(rcWid), pt))
 		{
@@ -159,14 +203,14 @@ Widget* MsgDispatcher::GetWidPt(const std::vector<Widget*>& rgpWid)
 	{
 		pWid = *it;
 		ASSERT(pWid != NULL);
-		Gdiplus::Rect rcWid;
+		Gdiplus::RectF rcWid;
 		pWid->GetWidRect(rcWid);
-		float fArea = rcWid.Width() * rcWid.Height();
+		float fArea = rcWid.Width * rcWid.Height;
 		float fMinArea = fArea;
 		for (; it != rgpWid.end(); ++it)
 		{
 			pWid->GetWidRect(rcWid);
-			fArea = rcWid.Width() * rcWid.Height();
+			fArea = rcWid.Width * rcWid.Height;
 			if (fArea < fMinArea)
 			{
 				fMinArea = fArea;

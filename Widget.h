@@ -41,6 +41,8 @@ public:
 	void GetRect(Gdiplus::RectF& rc);
 	void GetWidRect(Gdiplus::RectF& rc);
 	void SetWidRect(const Gdiplus::RectF& rc);
+	void ShowWid(WORD wShow);
+
 private:
 	void SetRect(const Gdiplus::RectF& rc);
 public:
@@ -90,14 +92,23 @@ public:
 	Gdiplus::Color GetFrameClr() const;
 	void SetTextClr(const Gdiplus::Color& clrText);
 	Gdiplus::Color GetTextColor() const;
+
+public:
+	BOOL SendWidMessage(UINT uMsg, WPARAM wParam = 0, LPARAM lParam = 0);
+	BOOL PostWidMessage(UINT uMsg, WPARAM wParam = 0, LPARAM lParam = 0);
+
+	UINT_PTR SetWidTimer(UINT_PTR nIDEvent, UINT uElapse, TIMERPROC lpTimerFunc);
+	BOOL KillWidTimer(UINT_PTR uIDEvent);
+
 public:
 	void SetState(WORD wState);
 	WORD GetState() const;
 
 private:
 	WORD m_wState;
+
 private:
-	void InitText();
+	void InitFont();
 private:
 	std::wstring m_strText;
 	SharedPtr<Gdiplus::StringFormat> m_pFormat;
@@ -110,6 +121,7 @@ private:
 	Gdiplus::RectF m_rc;
 	Gdiplus::RectF m_rcWid;
 	BOOL m_bNC;
+	WORD m_wShow;
 
 	// Generation
 	Widget* m_pParent;
@@ -122,6 +134,10 @@ private:
 	// Scrollbar
 	ScrollBar* m_pHScrollbar;
 	ScrollBar* m_pVScrollbar;
+	int m_nSBflags;
+
+	// Timers
+	std::vector<UINT_PTR> m_rgTimer;
 };
 
 class WTL_API ScrollBar : public Widget
@@ -157,9 +173,10 @@ protected:
 	void DrawWid(Widget* pWid);
 	void DrawGen(Widget* pWid, HDC hdc);
 public:
-	LRESULT HandleMessage(UINT nMsg, WPARAM wParam, LPARAM lParam);
+	LRESULT DispatchMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	Widget* GetWidPt(POINT pt);
 	Widget* GetWidPt(const std::vector<Widget*>& rgpWid);
+	Widget* FromHwid(HWID hWid) const;
 public:
 	static HINSTANCE GetInstance();
 	static void SetInstance(HINSTANCE hInstance);
@@ -168,10 +185,17 @@ protected:
 	HWND m_hWnd;
 	std::vector<HWID> m_rghWid;
 	std::map<HWID, Widget*> m_rgID2Info;
+	HWID m_hLastMouseMove;
 public:
 	static HWID s_hWidBase;
 private:
 	static HINSTANCE s_hInstance;
+};
+
+class WTL_API LayoutBase
+{
+public:
+	virtual SharedPtr<MsgDispatcher> Parse(const std::wstring& strXml);
 };
 
 END_NAMESPACE_WTL

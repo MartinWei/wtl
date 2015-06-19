@@ -16,9 +16,9 @@
 #define WTL_API //__declspec(dllimport)
 #endif
 
-#define BEGIN_NAMESPACE_WTL
-#define END_NAMESPACE_WTL 
-#define USING_NAMESPACE_WTL
+#define BEGIN_NAMESPACE_WTL	//namespace wtl {
+#define END_NAMESPACE_WTL //}
+#define USING_NAMESPACE_WTL //using namespace wtl
 
 #include <xstring>
 #include <vector>
@@ -29,6 +29,7 @@
 #include <OleCtl.h>
 #include <memory>
 #include <GdiPlus.h>
+#pragma comment(lib, "gdiplus.lib")
 
 DECLARE_HANDLE	(HWID);
 
@@ -63,17 +64,35 @@ void WTL_API __Trace(LPCTSTR pstrFormat, ...);
 
 #define INVALID_HWID NULL
 
-#define CLR_WID_BKGND_STATIC RGB(60, 60, 60)
-#define CLR_WID_FRAME_STATIC RGB(100, 100, 100)
 #define SIZE_SCROLLBAR 11
 
-#define CLR_WID_BKGND_MOUSEMOVE RGB(30, 30, 30)
-#define CLR_WID_FRAME_MOUSEMOVE RGB(90, 90, 90)
 
+#define WID_DEFAULT_TEXT	L"WTL Widget"
 // State
-#define WID_STATE_STATIC 0
-#define WID_STATE_MOUSEOVER 1
-#define WID_STATE_PUSH 2
+#define WID_STATE_STATIC	0
+#define WID_STATE_MOUSE		1
+#define WID_STATE_PUSH		2
+
+// State Color
+#define WID_BKGND_STATIC	RGB(60, 60, 60)
+#define WID_BKGND_MOUSE		RGB(30, 30, 30)
+#define WID_BKGND_PUSH		RGB(30, 30, 30)
+
+#define WID_FRAME_STATIC	RGB(100, 100, 100)
+#define WID_FRAME_MOUSE		RGB(90, 90, 90)
+#define WID_FRAME_PUSH		RGB(90, 90, 90)
+
+#define WID_TEXT_STATIC		RGB(180, 180, 180)
+#define WID_TEXT_MOUSE		RGB(180, 180, 180)
+#define WID_TEXT_PUSH		RGB(255, 255, 128)
+
+#define WID_FONT_STATIC		L"System"
+#define WID_FONT_MOUSE		L"System"
+#define WID_FONT_PUSH		L"System"
+
+#define WID_FSIZE_STATIC	10
+#define WID_FSIZE_MOUSE		10
+#define WID_FSIZE_PUSH		10
 
 #define WTL_BEGIN_MSG_MAP(theClass)\
 	public:\
@@ -113,3 +132,32 @@ void WTL_API __Trace(LPCTSTR pstrFormat, ...);
 		} \
 		return FALSE; \
 	}
+
+BEGIN_NAMESPACE_WTL
+
+class WTL_API MemDC
+{
+public:
+	MemDC(HDC hdc);
+	~MemDC();
+public:
+	operator HDC();
+private:
+	HDC m_hdc;
+};
+
+class WTL_API GdiPlusHelper
+{
+public:
+	GdiPlusHelper();
+	~GdiPlusHelper();
+	ULONG_PTR m_nGdiPlusToken;
+};
+
+extern WTL_API GdiPlusHelper gdiplushelper;
+
+END_NAMESPACE_WTL
+
+#define __begin_mem_draw { 
+
+#define __end_mem_draw }
